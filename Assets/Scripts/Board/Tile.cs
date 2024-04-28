@@ -21,4 +21,9 @@ public class Tile : MonoBehaviour
     {
         GameManager.Instance.board.boardTiles[xCoord, yCoord] = this;
     }
+
+    public string printSelf()
+    {
+        return "(" + xCoord + ", " + yCoord + ")";
+    }
 }
