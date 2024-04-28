@@ -8,6 +8,8 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get { return _instance; } }
 
     public Board board;
+    public bool battleOngoing = false;
+    public int coins;
     void Awake()
     {
         if (_instance != null && _instance != this)
