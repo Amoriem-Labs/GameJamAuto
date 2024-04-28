@@ -40,7 +40,7 @@ public class Board : MonoBehaviour
 
         foreach (Tile t in testPath)
         {
-            print(t.printSelf());
+            print(t.printSelf());   
         }
     }
 
