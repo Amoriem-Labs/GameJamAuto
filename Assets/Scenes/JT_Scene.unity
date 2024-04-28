@@ -445,6 +445,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   board: {fileID: 0}
+  battleOngoing: 0
+  coins: 0
 --- !u!4 &855122193
 Transform:
   m_ObjectHideFlags: 0

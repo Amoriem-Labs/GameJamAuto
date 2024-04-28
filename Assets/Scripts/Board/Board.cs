@@ -46,7 +46,7 @@ public class Board : MonoBehaviour
 
     public delegate bool CheckTileDelegate(Tile tile);
 
-    public List<Tile> GetPathToTile(Tile startTile,  CheckTileDelegate checkCompleteAction)
+    public List<Tile> GetPathToTile(Tile startTile, CheckTileDelegate checkCompleteAction)
     {
         Queue<Tile> queue = new Queue<Tile>();
         HashSet<Tile> visited = new HashSet<Tile>();

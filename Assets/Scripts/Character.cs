@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class Character : MonoBehaviour
 {
@@ -26,7 +27,9 @@ public class Character : MonoBehaviour
     public float moveSpeed;
     public STATE state;
     public Tile currentTile;
-    public Tile[] path;
+    public Tile destinationTile;
+    public List<Tile> path;
+    public bool isOnPlayerTeam;
     [Space]
     [Header("Target Variables")]
     public Character target;
@@ -63,7 +66,14 @@ public class Character : MonoBehaviour
                     // Pathfind to target
                     if (target == null) target = FindNearestEnemy();
                     path = GetPath(target);
-                    numTilesToTarget = path.Length;
+                    numTilesToTarget = path.Count;
+                    if (target.destinationTile == this.destinationTile){
+                        float chance = Random.Range(0f, 1f);
+                        if (chance < 0.5f){
+                            state = STATE.Move;
+                        }
+                        break;
+                    }
                     state = STATE.Move;
                     break;
                 case STATE.Move:
@@ -80,17 +90,22 @@ public class Character : MonoBehaviour
                     break;
                 case STATE.Attack:
                     // Attack target
-                    if (attackCooldownTimer > 0)
-                    {
-                        attackCooldownTimer -= Time.deltaTime;
+                    if (numTilesToTarget > range){
+                        state = STATE.Pathfinding;
                     }
-                    else
-                    {
-                        attackCooldownTimer = attackCooldown;
-                        if (Attack(target)) // if target is dead
+                    else{
+                        if (attackCooldownTimer > 0)
                         {
-                            // target is dead
-                            state = STATE.Pathfinding;
+                            attackCooldownTimer -= Time.deltaTime;
+                        }
+                        else
+                        {
+                            attackCooldownTimer = attackCooldown;
+                            if (Attack(target)) // if target is dead
+                            {
+                                // target is dead
+                                state = STATE.Pathfinding;
+                            }
                         }
                     }
                     break;
@@ -100,17 +115,30 @@ public class Character : MonoBehaviour
 
     public Character FindNearestEnemy()
     {
-        // Find nearest enemy
-        return null;
+        GameObject[] characters = GameObject.FindGameObjectsWithTag("Character");
+        List<Character> enemyCharacters = new List<Character>();
+        List<int> pathLengths = new List<int>();
+        foreach (GameObject character in characters)
+        {
+            Character charScript = character.GetComponent<Character>();
+            
+            if (!charScript.isOnPlayerTeam){
+                Tile enemyTile = charScript.currentTile;
+                pathLengths.Add(GameManager.Instance.board.GetPathToTile(currentTile, tile => tile.xCoord == enemyTile.xCoord && tile.yCoord == enemyTile.yCoord).Count);
+                enemyCharacters.Add(charScript);
+            }
+        }
+        // find element with smallest length in paths
+        int minIndex = pathLengths.IndexOf(pathLengths.AsQueryable().Min());
+        return enemyCharacters[minIndex];
     }
 
-    public Tile[] GetPath(Character otherChar)
+    public List<Tile> GetPath(Character otherChar)
     {
-        // Create path to other character
-        return null;
+        return GameManager.Instance.board.GetPathToTile(currentTile, tile => tile.xCoord == otherChar.currentTile.xCoord && tile.yCoord == otherChar.currentTile.yCoord);
     }
 
-    public bool MoveToTile(Tile[] path)
+    public bool MoveToTile(List<Tile> path)
     {
         float step = moveSpeed * Time.deltaTime; // calculate distance to move
         transform.position = Vector3.MoveTowards(transform.position, path[0].transform.position, step);

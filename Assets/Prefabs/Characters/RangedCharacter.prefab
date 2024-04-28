@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 4988380866285989202}
   m_Layer: 0
   m_Name: RangedCharacter
-  m_TagString: Untagged
+  m_TagString: Character
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -142,5 +142,9 @@ MonoBehaviour:
   - 100
   moveSpeed: 5
   state: 0
+  currentTile: {fileID: 0}
+  destinationTile: {fileID: 0}
+  path: []
+  isOnPlayerTeam: 0
   target: {fileID: 0}
   numTilesToTarget: 0
