@@ -20,7 +20,10 @@ public class Board : MonoBehaviour
 
     void Start()
     {
-        GameManager.Instance.board = this;
+        if (!GameManager.Instance.board)
+        {
+            GameManager.Instance.board = this;
+        }
         boardTiles = new Tile[boardWidth, boardHeight];
 
         // board tiles should populate themselves
