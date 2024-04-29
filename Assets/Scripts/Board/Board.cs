@@ -16,6 +16,10 @@ public class Board : MonoBehaviour
 
     void Awake()
     {
+    }
+
+    void Start()
+    {
         GameManager.Instance.board = this;
         boardTiles = new Tile[boardWidth, boardHeight];
 
@@ -26,16 +30,13 @@ public class Board : MonoBehaviour
         {
             for (int y = 0; y < boardHeight; y++)
             {
-                if (boardTiles[x,y] == null)
+                if (boardTiles[x, y] == null)
                 {
                     Debug.LogError("Tile " + x + "," + y + "not loaded");
                 }
             }
         }
-    }
 
-    void Start()
-    {
         List<Tile> testPath = GetPathToTile(boardTiles[3, 3], tile => tile.xCoord == 2 && tile.yCoord == 5);
 
         foreach (Tile t in testPath)
@@ -81,7 +82,7 @@ public class Board : MonoBehaviour
         return new List<Tile>(); 
     }
 
-    private List<Tile> ReconstructPath(Tile endTile, Dictionary<Tile, Tile?> parentMap)
+    private List<Tile> ReconstructPath(Tile endTile, Dictionary<Tile, Tile> parentMap)
     {
         List<Tile> path = new List<Tile>();
         Tile current = endTile;

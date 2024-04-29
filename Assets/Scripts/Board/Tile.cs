@@ -7,6 +7,10 @@ public class Tile : MonoBehaviour
     public int xCoord;
     public int yCoord;
 
+    public enum TileType { FREE, OCCUPIED, RESERVED};
+
+    public TileType tileType = TileType.FREE;
+
     private void OnEnable()
     {
         Board.onBoardLoaded += addSelfToBoard;
