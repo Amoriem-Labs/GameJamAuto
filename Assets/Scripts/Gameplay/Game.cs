@@ -11,7 +11,22 @@ public class Game : MonoBehaviour
     public float currentMana = 0;
     public float maxMana;
 
+    public int drawNum = 5;
+
     public Tile hoveredTile;
+
+    public List<BaseSpell> drawPile = new List<BaseSpell>();
+    public List<BaseSpell> hand = new List<BaseSpell>();
+    public List<BaseSpell> discardPile = new List<BaseSpell>();
+
+    public delegate void DiscardSpell(BaseSpell spell);
+    public static event DiscardSpell onDiscardSpell;
+
+    public delegate void DrawSpell(BaseSpell spell);
+    public static event DrawSpell onDrawSpell;
+
+    public delegate void OnChangeState(GameplayState newState);
+    public static event OnChangeState onChangeStae;
 
     void Start()
     {
@@ -63,11 +78,70 @@ public class Game : MonoBehaviour
         Character selected = getSelectedCharacter();
         Character.Team? team = selected?.team;
 
-        return team ?? Character.Team.Enemy;
+        return team ?? Character.Team.Neutral;
     }
 
     public void startBattle()
     {
+        foreach (BaseSpell spell in GameManager.Instance.playerGrimoire)
+        {
+            drawPile.Add(spell.copy());
+        }
+    }
 
+    public void shuffleDiscard()
+    {
+        foreach (BaseSpell spell in discardPile)
+        {
+            drawPile.Add(spell);
+        }
+
+        drawPile.Shuffle();
+
+        discardPile.Clear();
+    }
+
+    public void discardSpell(BaseSpell spell)
+    {
+        discardPile.Add(spell);
+        hand.Remove(spell);
+        onDiscardSpell?.Invoke(spell);
+    }
+
+    public void drawSpells(int num)
+    {
+        for (int i = 0; i < num; i++)
+        {
+            if (drawPile.Count <= 0)
+            {
+                shuffleDiscard();
+            }
+            BaseSpell spell = drawPile[0];
+            drawPile.RemoveAt(0);
+            hand.Add(spell);
+
+            onDrawSpell?.Invoke(spell);
+        }
+    }
+
+    public void queueNextHand()
+    {
+        foreach (BaseSpell spell in hand)
+        {
+            discardPile.Add(spell);
+        }
+
+        hand.Clear();
+
+        drawSpells(drawNum);
+    }
+
+    public void endTurn()
+    {
+        for (int i = hand.Count - 1; i > -1; i--)
+        {
+            discardSpell(hand[i]);
+        }
+        queueNextHand();
     }
 }
