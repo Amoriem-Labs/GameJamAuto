@@ -47,7 +47,7 @@ public class Board : MonoBehaviour
 
     public delegate bool CheckTileDelegate(Tile tile);
 
-    public List<Tile> GetPathToTile(Tile startTile, CheckTileDelegate checkCompleteAction)
+    public List<Tile> GetPathToTile(Tile startTile, CheckTileDelegate checkCompleteAction, bool ignoreTakenTiles = false)
     {
         Queue<Tile> queue = new Queue<Tile>();
         HashSet<Tile> visited = new HashSet<Tile>();
@@ -69,7 +69,7 @@ public class Board : MonoBehaviour
             // Enqueue all adjacent tiles
             foreach (Tile neighbor in GetNeighbors(currentTile))
             {
-                if (!visited.Contains(neighbor))
+                if (!visited.Contains(neighbor) && !(ignoreTakenTiles && (neighbor.tileType == Tile.TileType.OCCUPIED || neighbor.tileType == Tile.TileType.RESERVED)))
                 {
                     queue.Enqueue(neighbor);
                     visited.Add(neighbor);
@@ -97,7 +97,7 @@ public class Board : MonoBehaviour
     private List<Tile> GetNeighbors(Tile tile)
     {
         List<Tile> neighbors = new List<Tile>();
-        List<(int, int)> neighborOffsets = new List<(int,int)> { (0,1), (0,-1), (0,1), (0,-1)};
+        List<(int, int)> neighborOffsets = new List<(int,int)> { (0,1), (0,-1), (1,0), (-1,0)};
         if (tile.yCoord % 2 == 0)
         {
             neighborOffsets.Add((-1, 1));
