@@ -33,6 +33,7 @@ public class Character : MonoBehaviour
         Player,
         Enemy,
         Neutral,
+        Null,
     
     };
     public Team team;
