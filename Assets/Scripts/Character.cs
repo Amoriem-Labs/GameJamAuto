@@ -218,8 +218,8 @@ public class Character : MonoBehaviour
         return false;
     }
 
-    public void TakeDamage(){
-        target.hp -= attackDamage;
+    public void TakeDamage(float attackDamage){
+        this.hp -= attackDamage;
     }
 
     public void UpdateLevel()
