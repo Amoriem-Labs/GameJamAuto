@@ -13,8 +13,12 @@ public class GameManager : MonoBehaviour
 
     public List<GameObject> allSpells = new List<GameObject>();
 
+    [HideInInspector]
     public Board board;
-    public bool battleOngoing;
+    [HideInInspector]
+    public Game game;
+
+    public bool battleOngoing = true;
     public int coins;
 
     public float heroHealth;

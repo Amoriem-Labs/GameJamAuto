@@ -14,7 +14,12 @@ public class TestSpell : BaseSpell
     }
     public override bool play()
     {
-        return true;
+        if (GameManager.Instance.game.hoveredTile?.currentOccupant?.isOnPlayerTeam ?? false == false)
+        {
+
+            return true;
+        }
+        return false;
     }
     public override List<Tile> highlight(Tile tile)
     {

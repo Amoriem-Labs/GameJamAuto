@@ -45,6 +45,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf6d24439068d974f8c625374e73c174, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  body: {fileID: 4469902585763541314}
+  hovered: 0
   xCoord: 0
   yCoord: 0
   tileType: 0
@@ -102,7 +104,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5233112405309087440, guid: 91314422a9685694fb146ed0895720d6, type: 3}
       propertyPath: m_TagString
-      value: Tile
+      value: TileBody
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

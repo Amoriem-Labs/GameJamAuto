@@ -22,6 +22,11 @@ public abstract class BaseSpell : MonoBehaviour
 
     public abstract List<Tile> highlight(Tile tile);
 
+    public void takeManaCost()
+    {
+        GameManager.Instance.game.currentMana -= manaCost;
+    }
+
     public string getDescription()
     {
         return "Mana Cost: " + manaCost.ToString("0") + "\n" + description;
