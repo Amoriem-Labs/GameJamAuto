@@ -98,7 +98,7 @@ public class Board : MonoBehaviour
     private List<Tile> GetNeighbors(Tile tile)
     {
         List<Tile> neighbors = new List<Tile>();
-        List<(int, int)> neighborOffsets = new List<(int,int)> { (0,1), (0,-1), (0,1), (0,-1)};
+        List<(int, int)> neighborOffsets = new List<(int,int)> { (0,1), (0,-1), (1,0), (-1,0)};
         if (tile.yCoord % 2 == 0)
         {
             neighborOffsets.Add((-1, 1));
