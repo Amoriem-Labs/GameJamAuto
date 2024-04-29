@@ -29,7 +29,12 @@ public class Character : MonoBehaviour
     public Tile currentTile;
     public Tile destinationTile;
     public List<Tile> path;
-    public bool isOnPlayerTeam;
+    public enum Team{
+        Player,
+        Enemy
+    
+    };
+    public Team team;
     public float rotationSpeed;
     [Space]
     [Header("Target Variables")]
@@ -66,7 +71,7 @@ public class Character : MonoBehaviour
             UpdateEnemiesList();
             if (enemyCharacters.Count == 0){ // no more enemies
                 state = STATE.Idle;
-                if (isOnPlayerTeam){
+                if (team == Team.Player){
                     GameManager.Instance.WinRound();
                 } else {
                     GameManager.Instance.LoseRound();
@@ -87,7 +92,7 @@ public class Character : MonoBehaviour
                         if (path.Count > 1 && destinationTile == null){
                             destinationTile = path[1];
                         }
-                        if ((target != null && target.state == STATE.Move && numTilesToTarget <= range) || destinationTile.tileType == Tile.TileType.RESERVED){
+                        if ((target.state == STATE.Move && numTilesToTarget <= range) || (destinationTile != null && destinationTile.tileType == Tile.TileType.RESERVED)){
                             state = STATE.Idle;
                             break;
                         }
@@ -131,6 +136,7 @@ public class Character : MonoBehaviour
                             {
                                 if (anim != null){
                                     anim.Play("Skeleton|Melee_1");
+                                    Debug.Log("playing melee animation");
                                 }
                                 attackCooldownTimer = attackCooldown;
                                 if (Attack(target)) // if target is dead
@@ -162,7 +168,7 @@ public class Character : MonoBehaviour
         {
             Character charScript = character.GetComponent<Character>();
             
-            if ((isOnPlayerTeam && !charScript.isOnPlayerTeam) || (!isOnPlayerTeam && charScript.isOnPlayerTeam)){
+            if ((team == Team.Player && charScript.team == Team.Enemy) || (team == Team.Enemy && charScript.team == Team.Player)){
                 Tile enemyTile = charScript.currentTile;
                 pathLengths.Add(GameManager.Instance.board.GetPathToTile(currentTile, tile => tile.xCoord == enemyTile.xCoord && tile.yCoord == enemyTile.yCoord).Count);
                 enemyCharacters.Add(charScript);
