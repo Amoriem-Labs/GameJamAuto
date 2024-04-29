@@ -205,7 +205,7 @@ public class Character : MonoBehaviour
     {
         if (target == null) return true;
         // Attack target
-        target.hp -= attackDamage;
+        target.TakeDamage();
         if (target.hp <= 0)
         {
             GameManager.Instance.coins += coinsToGiveUponDeath[level];
@@ -216,6 +216,10 @@ public class Character : MonoBehaviour
             return true;
         }
         return false;
+    }
+
+    public void TakeDamage(){
+        target.hp -= attackDamage;
     }
 
     public void UpdateLevel()
