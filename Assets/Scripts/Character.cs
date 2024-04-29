@@ -36,7 +36,16 @@ public class Character : MonoBehaviour
         Null,
     
     };
+    public enum ClassType{
+        Warrior,
+        Mage,
+        Archer,
+        Rogue,
+        Cleric,
+        Null,
+    }
     public Team team;
+    public ClassType classType;
     public float rotationSpeed;
     [Space]
     [Header("Target Variables")]
@@ -137,8 +146,7 @@ public class Character : MonoBehaviour
                             else
                             {
                                 if (anim != null){
-                                    anim.Play("Skeleton|Melee_1");
-                                    Debug.Log("playing melee animation");
+                                    anim.Play("Skeleton|Attack");
                                 }
                                 attackCooldownTimer = attackCooldown;
                                 if (Attack(target)) // if target is dead
@@ -205,7 +213,7 @@ public class Character : MonoBehaviour
     {
         if (target == null) return true;
         // Attack target
-        target.TakeDamage();
+        target.TakeDamage(attackDamage);
         if (target.hp <= 0)
         {
             GameManager.Instance.coins += coinsToGiveUponDeath[level];
