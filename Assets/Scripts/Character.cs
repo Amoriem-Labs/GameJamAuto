@@ -30,12 +30,14 @@ public class Character : MonoBehaviour
     public Tile destinationTile;
     public List<Tile> path;
     public bool isOnPlayerTeam;
+    public float rotationSpeed;
     [Space]
     [Header("Target Variables")]
     public Character target;
     public int numTilesToTarget;
     private List<Character> enemyCharacters = new List<Character>();
     private List<int> pathLengths = new List<int>();
+    private Animator anim;
 
     public enum STATE
     {
@@ -53,7 +55,8 @@ public class Character : MonoBehaviour
         hp = levelHPs[level];
         xpUntilNextLevel = levelXPCaps[level];
         attackDamage = levelAttackDamages[level];
-        transform.position = currentTile.transform.position;
+        transform.position = currentTile.transform.position + new Vector3(0, 0.45f, 0);
+        anim = GetComponent<Animator>();
     }
 
     // Update is called once per frame
@@ -72,17 +75,19 @@ public class Character : MonoBehaviour
                 switch (state)
                 {
                     case STATE.Idle:
+                        if (anim != null) anim.Play("Idle");
                         state = STATE.Pathfinding;
                         break;
                     case STATE.Pathfinding:
                         // Pathfind to target
+                        if (anim != null) anim.Play("Idle");
                         if (target == null) target = FindNearestEnemy();
                         path = GetPath(target);
                         numTilesToTarget = path.Count - 1;
                         if (path.Count > 1 && destinationTile == null){
                             destinationTile = path[1];
                         }
-                        if ((target.state == STATE.Move && numTilesToTarget <= range + 1) || destinationTile.tileType == Tile.TileType.RESERVED){
+                        if ((target != null && target.state == STATE.Move && numTilesToTarget <= range) || destinationTile.tileType == Tile.TileType.RESERVED){
                             state = STATE.Idle;
                             break;
                         }
@@ -90,10 +95,17 @@ public class Character : MonoBehaviour
                             path = new List<Tile>();
                             state = STATE.Attack;
                         } else {
+                            destinationTile.tileType = Tile.TileType.RESERVED;
                             state = STATE.Move;
                         }
                         break;
                     case STATE.Move:
+                        // Move to target
+                        if (anim != null){
+                            anim.Play("Skeleton|Walk");
+                        }
+                        Quaternion toRotation = Quaternion.LookRotation(destinationTile.transform.position + new Vector3(0, 0.45f, 0) - transform.position, Vector3.up);
+                        transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, rotationSpeed * Time.deltaTime);
                         bool arrivedAtTile = MoveToTile(path);
                         if (arrivedAtTile)
                         {
@@ -108,12 +120,18 @@ public class Character : MonoBehaviour
                             state = STATE.Pathfinding;
                         }
                         else{
+                            Quaternion rotation = Quaternion.LookRotation(destinationTile.transform.position + new Vector3(0, 0.45f, 0) - transform.position, Vector3.up);
+                            transform.rotation = rotation;
                             if (attackCooldownTimer > 0)
                             {
+                                if (anim != null) anim.Play("Idle");
                                 attackCooldownTimer -= Time.deltaTime;
                             }
                             else
                             {
+                                if (anim != null){
+                                    anim.Play("Skeleton|Melee_1");
+                                }
                                 attackCooldownTimer = attackCooldown;
                                 if (Attack(target)) // if target is dead
                                 {
@@ -160,11 +178,11 @@ public class Character : MonoBehaviour
     public bool MoveToTile(List<Tile> path)
     {
         float step = moveSpeed * Time.deltaTime; // calculate distance to move
-        transform.position = Vector3.MoveTowards(transform.position, path[1].transform.position, step);
+        transform.position = Vector3.MoveTowards(transform.position, path[1].transform.position + new Vector3(0, 0.45f, 0), step);
         currentTile.tileType = Tile.TileType.FREE;
         destinationTile.tileType = Tile.TileType.RESERVED;
 
-        if (Vector3.Distance(transform.position, path[1].transform.position) < 0.001f)
+        if (Vector3.Distance(transform.position, path[1].transform.position + new Vector3(0, 0.45f, 0)) < 0.001f)
         {
             currentTile = path[1];
             destinationTile.tileType = Tile.TileType.OCCUPIED;

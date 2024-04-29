@@ -46,12 +46,15 @@ public class GameManager : MonoBehaviour
         if (battleOngoing == true){
             battleOngoing = false;
         }
+    }
+    
     // for now just implement a base deck, maybe expand upon this some other time
     public void startGame()
     {
         updateHeroMaxHealth(1000);
         updateHeroHealth(heroMaxHealth);
     }
+
     public void updateHeroHealth(float _health)
     {
         heroHealth = _health;
