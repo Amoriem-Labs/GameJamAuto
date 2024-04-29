@@ -34,6 +34,8 @@ public class Character : MonoBehaviour
     [Header("Target Variables")]
     public Character target;
     public int numTilesToTarget;
+    private List<Character> enemyCharacters = new List<Character>();
+    private List<int> pathLengths = new List<int>();
 
     public enum STATE
     {
@@ -51,86 +53,103 @@ public class Character : MonoBehaviour
         hp = levelHPs[level];
         xpUntilNextLevel = levelXPCaps[level];
         attackDamage = levelAttackDamages[level];
+        transform.position = currentTile.transform.position;
     }
 
     // Update is called once per frame
     void Update()
     {
         if (GameManager.Instance.battleOngoing){ // filler variable
-            switch (state)
-            {
-                case STATE.Idle:
-                    state = STATE.Pathfinding;
-                    break;
-                case STATE.Pathfinding:
-                    // Pathfind to target
-                    if (target == null) target = FindNearestEnemy();
-                    path = GetPath(target);
-                    numTilesToTarget = path.Count;
-                    if (target.destinationTile == this.destinationTile){
-                        float chance = Random.Range(0f, 1f);
-                        if (chance < 0.5f){
+            UpdateEnemiesList();
+            if (enemyCharacters.Count == 0){ // no more enemies
+                state = STATE.Idle;
+                if (isOnPlayerTeam){
+                    GameManager.Instance.WinRound();
+                } else {
+                    GameManager.Instance.LoseRound();
+                }
+            } else {
+                switch (state)
+                {
+                    case STATE.Idle:
+                        state = STATE.Pathfinding;
+                        break;
+                    case STATE.Pathfinding:
+                        // Pathfind to target
+                        if (target == null) target = FindNearestEnemy();
+                        path = GetPath(target);
+                        numTilesToTarget = path.Count - 1;
+                        if (path.Count > 1 && destinationTile == null){
+                            destinationTile = path[1];
+                        }
+                        if ((target.state == STATE.Move && numTilesToTarget <= range + 1) || destinationTile.tileType == Tile.TileType.RESERVED){
+                            state = STATE.Idle;
+                            break;
+                        }
+                        if (numTilesToTarget <= range){
+                            path = new List<Tile>();
+                            state = STATE.Attack;
+                        } else {
                             state = STATE.Move;
                         }
                         break;
-                    }
-                    state = STATE.Move;
-                    break;
-                case STATE.Move:
-                    bool arrivedAtTile = MoveToTile(path);
-                    if (arrivedAtTile)
-                    {
+                    case STATE.Move:
+                        bool arrivedAtTile = MoveToTile(path);
+                        if (arrivedAtTile)
+                        {
+                            if (numTilesToTarget > range){
+                                state = STATE.Pathfinding;
+                            }
+                        }
+                        break;
+                    case STATE.Attack:
+                        // Attack target
                         if (numTilesToTarget > range){
                             state = STATE.Pathfinding;
                         }
                         else{
-                            state = STATE.Attack;
-                        }
-                    }
-                    break;
-                case STATE.Attack:
-                    // Attack target
-                    if (numTilesToTarget > range){
-                        state = STATE.Pathfinding;
-                    }
-                    else{
-                        if (attackCooldownTimer > 0)
-                        {
-                            attackCooldownTimer -= Time.deltaTime;
-                        }
-                        else
-                        {
-                            attackCooldownTimer = attackCooldown;
-                            if (Attack(target)) // if target is dead
+                            if (attackCooldownTimer > 0)
                             {
-                                // target is dead
-                                state = STATE.Pathfinding;
+                                attackCooldownTimer -= Time.deltaTime;
+                            }
+                            else
+                            {
+                                attackCooldownTimer = attackCooldown;
+                                if (Attack(target)) // if target is dead
+                                {
+                                    // target is dead
+                                    state = STATE.Pathfinding;
+                                }
                             }
                         }
-                    }
-                    break;
+                        break;
+                }
             }
         }
     }
 
     public Character FindNearestEnemy()
     {
+        UpdateEnemiesList();
+        // find element with smallest length in paths
+        int minIndex = pathLengths.IndexOf(pathLengths.AsQueryable().Min());
+        return enemyCharacters[minIndex];
+    }
+
+    public void UpdateEnemiesList(){
         GameObject[] characters = GameObject.FindGameObjectsWithTag("Character");
-        List<Character> enemyCharacters = new List<Character>();
-        List<int> pathLengths = new List<int>();
+        enemyCharacters = new List<Character>();
+        pathLengths = new List<int>();
         foreach (GameObject character in characters)
         {
             Character charScript = character.GetComponent<Character>();
             
-            if (!charScript.isOnPlayerTeam){
+            if ((isOnPlayerTeam && !charScript.isOnPlayerTeam) || (!isOnPlayerTeam && charScript.isOnPlayerTeam)){
                 Tile enemyTile = charScript.currentTile;
                 pathLengths.Add(GameManager.Instance.board.GetPathToTile(currentTile, tile => tile.xCoord == enemyTile.xCoord && tile.yCoord == enemyTile.yCoord).Count);
                 enemyCharacters.Add(charScript);
             }
         }
-        // find element with smallest length in paths
-        int minIndex = pathLengths.IndexOf(pathLengths.AsQueryable().Min());
-        return enemyCharacters[minIndex];
     }
 
     public List<Tile> GetPath(Character otherChar)
@@ -141,10 +160,15 @@ public class Character : MonoBehaviour
     public bool MoveToTile(List<Tile> path)
     {
         float step = moveSpeed * Time.deltaTime; // calculate distance to move
-        transform.position = Vector3.MoveTowards(transform.position, path[0].transform.position, step);
+        transform.position = Vector3.MoveTowards(transform.position, path[1].transform.position, step);
+        currentTile.tileType = Tile.TileType.FREE;
+        destinationTile.tileType = Tile.TileType.RESERVED;
 
-        if (Vector3.Distance(transform.position, target.transform.position) < 0.001f)
+        if (Vector3.Distance(transform.position, path[1].transform.position) < 0.001f)
         {
+            currentTile = path[1];
+            destinationTile.tileType = Tile.TileType.OCCUPIED;
+            destinationTile = null;
             return true;
         }
         return false;
@@ -153,14 +177,15 @@ public class Character : MonoBehaviour
     // Attack target. Return true if target is dead, return false otherwise.
     public bool Attack(Character target)
     {
+        if (target == null) return true;
         // Attack target
         target.hp -= attackDamage;
         if (target.hp <= 0)
         {
-            target = null;
             GameManager.Instance.coins += coinsToGiveUponDeath[level];
             currentXP += xpToGiveUponDeath[level];
             Destroy(target.gameObject);
+            target = null;
             UpdateLevel();
             return true;
         }

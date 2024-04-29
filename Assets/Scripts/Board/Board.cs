@@ -37,7 +37,7 @@ public class Board : MonoBehaviour
             }
         }
 
-        List<Tile> testPath = GetPathToTile(boardTiles[3, 3], tile => tile.xCoord == 2 && tile.yCoord == 5);
+        List<Tile> testPath = GetPathToTile(boardTiles[3, 7], tile => tile.xCoord == 2 && tile.yCoord == 7);
 
         foreach (Tile t in testPath)
         {
@@ -52,7 +52,6 @@ public class Board : MonoBehaviour
         Queue<Tile> queue = new Queue<Tile>();
         HashSet<Tile> visited = new HashSet<Tile>();
         Dictionary<Tile, Tile> parentMap = new Dictionary<Tile, Tile>(); // Map each tile to its parent
-
         queue.Enqueue(startTile);
         visited.Add(startTile);
         parentMap[startTile] = null; // Start tile has no parent

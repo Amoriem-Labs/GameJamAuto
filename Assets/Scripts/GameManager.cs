@@ -8,7 +8,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get { return _instance; } }
 
     public Board board;
-    public bool battleOngoing = true;
+    public bool battleOngoing;
     public int coins;
     void Awake()
     {
@@ -20,6 +20,18 @@ public class GameManager : MonoBehaviour
         {
             _instance = this;
             DontDestroyOnLoad(_instance);
+        }
+    }
+
+    public void WinRound(){
+        if (battleOngoing == true){
+            battleOngoing = false;
+        }
+    }
+
+    public void LoseRound(){
+        if (battleOngoing == true){
+            battleOngoing = false;
         }
     }
 }
