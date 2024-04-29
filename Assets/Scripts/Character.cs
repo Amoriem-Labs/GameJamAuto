@@ -31,7 +31,8 @@ public class Character : MonoBehaviour
     public List<Tile> path;
     public enum Team{
         Player,
-        Enemy
+        Enemy,
+        Neutral,
     
     };
     public Team team;
