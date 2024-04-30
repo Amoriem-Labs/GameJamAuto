@@ -81,7 +81,7 @@ public class Board : MonoBehaviour
         return new List<Tile>(); 
     }
 
-    private List<Tile> ReconstructPath(Tile endTile, Dictionary<Tile, Tile?> parentMap)
+    private List<Tile> ReconstructPath(Tile endTile, Dictionary<Tile, Tile> parentMap)
     {
         List<Tile> path = new List<Tile>();
         Tile current = endTile;
