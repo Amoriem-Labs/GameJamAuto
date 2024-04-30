@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,8 +11,6 @@ public class GameManager : MonoBehaviour
     public delegate void HeroStateUpdate();
 
     public static event HeroStateUpdate onHeroStateUpdated;
-
-    public List<GameObject> allSpells = new List<GameObject>();
 
     [HideInInspector]
     public Board board;
@@ -27,6 +26,18 @@ public class GameManager : MonoBehaviour
 
     public List<BaseSpell> playerGrimoire = new List<BaseSpell>();
 
+    public enum EntityTypes { TEST_CHAR_ONE, TEST_ENEMY_ONE };
+
+    [SerializeField]
+    private List<EntityEnumMatch> entityDictSetup = new List<EntityEnumMatch>();
+    public Dictionary<EntityTypes, Entity> entityObjectDict = new Dictionary<EntityTypes, Entity>();
+    public enum SpellTypes { TEST_SPELL_ONE, TEST_SPELL_TWO };
+
+    public Dictionary<SpellTypes, Type> spellDict = new Dictionary<SpellTypes, Type> {
+        { SpellTypes.TEST_SPELL_ONE, typeof(TestSpell) },
+        { SpellTypes.TEST_SPELL_TWO, typeof(TestSpellTwo) }
+    };
+
     void Awake()
     {
         if (_instance != null && _instance != this)
@@ -38,11 +49,16 @@ public class GameManager : MonoBehaviour
             _instance = this;
             DontDestroyOnLoad(_instance);
         }
+
+        foreach (EntityEnumMatch match in entityDictSetup) {
+            entityObjectDict.Add(match.entityName, match.entityObject.GetComponent<Entity>());
+        }
+
+        startGame();
     }
 
     void Start()
     {
-        startGame();
     }
 
     public void WinRound(){
@@ -63,9 +79,10 @@ public class GameManager : MonoBehaviour
         updateHeroMaxHealth(1000);
         updateHeroHealth(heroMaxHealth);
 
-        for (int i = 0; i < 10; i++)
-        {
+        for (int i = 0; i < 5; i++) { 
+
             playerGrimoire.Add(new TestSpell());
+            playerGrimoire.Add(new TestSpellTwo());
         }
     }
 

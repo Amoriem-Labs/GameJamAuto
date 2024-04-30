@@ -20,7 +20,7 @@ public class Tile : MonoBehaviour
 
     public TileType tileType = TileType.FREE;
 
-    public Character currentOccupant = null;
+    public Entity currentOccupant = null;
 
     void Awake()
     {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public abstract class BaseSpell : ICopyable<BaseSpell>
@@ -10,13 +11,13 @@ public abstract class BaseSpell : ICopyable<BaseSpell>
     public Dictionary<string, float> statsDict = new Dictionary<string, float>();
 
     public string spellName = "Unnamed Spell";
-    public string description = "Undefined";
+    protected string description = "Undefined";
 
-    public enum SpellType { NO_TARGET, SINGLE_TARGET, AOE};
+    public enum SpellType { NO_TARGET, SINGLE_TARGET, AOE, TARGET_ALLY};
 
     public SpellType spellType = SpellType.NO_TARGET;
 
-    protected virtual void Start()
+    public BaseSpell()
     {
         statsDict.Add("manaCost", 0);
         gameState = GameManager.Instance.GetComponent<Game>();

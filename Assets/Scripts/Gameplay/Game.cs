@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Game : MonoBehaviour
@@ -24,6 +25,10 @@ public class Game : MonoBehaviour
 
     public Tile hoveredTile;
 
+    public List<EnemyEntity> enemyUnits = new List<EnemyEntity>();
+
+    public List<PlayerEntity> playerUnits = new List<PlayerEntity>();
+
     public List<BaseSpell> drawPile = new List<BaseSpell>();
     public List<BaseSpell> hand = new List<BaseSpell>();
     public List<BaseSpell> discardPile = new List<BaseSpell>();
@@ -40,6 +45,9 @@ public class Game : MonoBehaviour
     public delegate void OnChangeResource();
     public static event OnChangeResource onChangeResource;
 
+    public delegate void OnControlTooltip(bool active, string text = "", string body = "");
+    public static event OnControlTooltip onControlTooltip;
+
     void Start()
     {
         if (!GameManager.Instance.game)
@@ -55,34 +63,64 @@ public class Game : MonoBehaviour
         onChangeResource?.Invoke();
 
         currTurnTimer = 0;
-
-        startBattle();
     }
 
     void Update()
     {
-        if (gameplayState == GameplayState.HERO_SETUP)
-        {
+        if (Input.GetKeyDown(KeyCode.P)) {
+            print("a");
+            foreach (BaseSpell spell in drawPile) {
+                print($"draw: {spell.spellName}");
+            }
+            foreach (BaseSpell spell in hand) {
+                print($"hand: {spell.spellName}");
+            }
+            foreach (BaseSpell spell in discardPile) {
+                print($"discard: {spell.spellName}");
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.O)) {
+            print("b");
+            if (gameplayState == GameplayState.NOT_PLAYING) {
+                startBattle();
+            }
+            createEntity(GameManager.EntityTypes.TEST_CHAR_ONE);
+            createEntity(GameManager.EntityTypes.TEST_ENEMY_ONE);
+        }
+
+        switch (gameplayState) {
+            case GameplayState.NOT_PLAYING:
+                break;
+            case GameplayState.HERO_SETUP:
             changeGameplayState(GameplayState.BATTLING);
-        }
-        if (gameplayState == GameplayState.NOT_PLAYING || gameplayState == GameplayState.HERO_SETUP)
-        {
-            return;
-        }
-        currTurnTimer += Time.deltaTime;
-        if (currTurnTimer >= turnMaxTime)
-        {
-            currTurnTimer = turnMaxTime;
-            turnReady = true;
-        }
+                break;
+            case GameplayState.CASTING:
+                break;
+            case GameplayState.BATTLING:
+                for (int i = playerUnits.Count - 1; i > -1; i--) {
+                    playerUnits[i].tick();
+                }
+                for (int i = enemyUnits.Count - 1; i > -1; i--) {
+                    enemyUnits[i].tick();
+                }
 
-        currentMana += Time.deltaTime * manaGain;
-        if (currentMana >= maxMana)
-        {
-            currentMana = maxMana;
-        }
+                currTurnTimer += Time.deltaTime;
+                if (currTurnTimer >= turnMaxTime)
+                {
+                    currTurnTimer = turnMaxTime;
+                    turnReady = true;
+                }
 
-        onChangeResource?.Invoke();
+                currentMana += Time.deltaTime * manaGain;
+                if (currentMana >= maxMana)
+                {
+                    currentMana = maxMana;
+                }
+
+                onChangeResource?.Invoke();
+                break;
+        }
 
         Tile hoveredTile = GetHoveredTile();
 
@@ -120,17 +158,17 @@ public class Game : MonoBehaviour
         return null;
     }
 
-    public Character getSelectedCharacter()
+    public Entity getSelectedCharacter()
     {
         return hoveredTile?.currentOccupant;
     }
 
-    public Character.Team getSelectedTeam()
+    public Entity.Team getSelectedTeam()
     {
-        Character selected = getSelectedCharacter();
-        Character.Team? team = selected?.team;
+        Entity selected = getSelectedCharacter();
+        Entity.Team? team = selected?.team;
 
-        return team ?? Character.Team.Neutral;
+        return team ?? Entity.Team.NULL;
     }
 
     public void startBattle()
@@ -205,5 +243,19 @@ public class Game : MonoBehaviour
         turnReady = false;
         currTurnTimer = 0;
         queueNextHand();
+    }
+
+    public void createEntity(GameManager.EntityTypes entityType, Tile tile = null) {
+        if (tile == null) {
+            tile = GameManager.Instance.board.getRandomEmptyTile();
+        }
+
+        GameObject newEntity = Instantiate(GameManager.Instance.entityObjectDict[entityType].gameObject, tile.transform.position, Quaternion.identity);
+        newEntity.transform.parent = GameManager.Instance.board.entityParent.transform;
+        newEntity.GetComponent<Entity>().commence(tile);
+    }
+
+    public static void tooltipControl(bool _active, string _title = "", string _body = "") {
+        onControlTooltip?.Invoke(_active, _title, _body);
     }
 }

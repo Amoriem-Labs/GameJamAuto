@@ -2,12 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
+[System.Serializable]
 public class TestSpell : BaseSpell
 {
 
-    protected override void Start()
-    {
-        base.Start();
+    public TestSpell() : base() {
         statsDict["manaCost"] = 30;
         statsDict["damage"] = 100;
         spellName = "Test Spell";
@@ -16,10 +16,10 @@ public class TestSpell : BaseSpell
     }
     public override bool play()
     {
-        Character selected = GameManager.Instance.game.getSelectedCharacter();
-        Character.Team team = GameManager.Instance.game.getSelectedTeam();
+        Entity selected = GameManager.Instance.game.getSelectedCharacter();
+        Entity.Team team = GameManager.Instance.game.getSelectedTeam();
 
-        if (team == Character.Team.Enemy && selected != null) // basically, if not null and on enemy team, then pass, otherwise fail
+        if (team == Entity.Team.ENEMY && selected != null) // basically, if not null and on enemy team, then pass, otherwise fail
         {
             takeManaCost();
             selected.TakeDamage(statsDict["damage"]);
