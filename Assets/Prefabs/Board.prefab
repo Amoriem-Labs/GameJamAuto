@@ -106,8 +106,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gameplayState: 0
+  heroHealth: 100
+  heroMaxHealth: 100
+  heroShield: 30
   currentMana: 0
-  maxMana: 0
+  maxMana: 100
+  manaGain: 5
+  turnMaxTime: 5
+  currTurnTimer: 0
+  drawNum: 5
+  turnReady: 0
   hoveredTile: {fileID: 0}
 --- !u!1 &3883701821179167022
 GameObject:

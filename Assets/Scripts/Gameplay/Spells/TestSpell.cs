@@ -22,9 +22,9 @@ public class TestSpell : BaseSpell
         if (team == Character.Team.Enemy && selected != null) // basically, if not null and on enemy team, then pass, otherwise fail
         {
             takeManaCost();
-            // deal damage to character
+            selected.TakeDamage(statsDict["damage"]);
             return true;
-        }*/
+        }
         return false;
     }
     public override List<Tile> highlight(Tile tile)

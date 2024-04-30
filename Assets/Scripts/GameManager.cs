@@ -21,9 +21,9 @@ public class GameManager : MonoBehaviour
     public bool battleOngoing = true;
     public int coins;
 
-    public float heroHealth;
-    public float heroMaxHealth;
-    public float maxMana;
+    public float heroHealth = 100f;
+    public float heroMaxHealth = 100f;
+    public float maxMana = 100f;
 
     public List<BaseSpell> playerGrimoire = new List<BaseSpell>();
 
@@ -38,6 +38,11 @@ public class GameManager : MonoBehaviour
             _instance = this;
             DontDestroyOnLoad(_instance);
         }
+    }
+
+    void Start()
+    {
+        startGame();
     }
 
     public void WinRound(){
@@ -57,6 +62,11 @@ public class GameManager : MonoBehaviour
     {
         updateHeroMaxHealth(1000);
         updateHeroHealth(heroMaxHealth);
+
+        for (int i = 0; i < 10; i++)
+        {
+            playerGrimoire.Add(new TestSpell());
+        }
     }
 
     public void updateHeroHealth(float _health)

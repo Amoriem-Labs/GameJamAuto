@@ -8,10 +8,19 @@ public class Game : MonoBehaviour
 
     public GameplayState gameplayState = GameplayState.NOT_PLAYING;
 
-    public float currentMana = 0;
-    public float maxMana;
+    public float heroHealth = 100;
+    public float heroMaxHealth = 100;
+    public float heroShield = 30;
 
+    public float currentMana = 0;
+    public float maxMana = 100f;
+    public float manaGain = 5f;
+
+    public float turnMaxTime = 5f;
+    public float currTurnTimer;
     public int drawNum = 5;
+
+    public bool turnReady = false;
 
     public Tile hoveredTile;
 
@@ -26,7 +35,10 @@ public class Game : MonoBehaviour
     public static event DrawSpell onDrawSpell;
 
     public delegate void OnChangeState(GameplayState newState);
-    public static event OnChangeState onChangeStae;
+    public static event OnChangeState onChangeState;
+
+    public delegate void OnChangeResource();
+    public static event OnChangeResource onChangeResource;
 
     void Start()
     {
@@ -34,10 +46,44 @@ public class Game : MonoBehaviour
         {
             GameManager.Instance.game = this;    
         }
+
+        maxMana = GameManager.Instance.maxMana;
+        heroHealth = GameManager.Instance.heroHealth;
+        heroMaxHealth = GameManager.Instance.heroMaxHealth;
+        heroShield = heroMaxHealth * .3f;
+
+        onChangeResource?.Invoke();
+
+        currTurnTimer = 0;
+
+        startBattle();
     }
 
     void Update()
     {
+        if (gameplayState == GameplayState.HERO_SETUP)
+        {
+            changeGameplayState(GameplayState.BATTLING);
+        }
+        if (gameplayState == GameplayState.NOT_PLAYING || gameplayState == GameplayState.HERO_SETUP)
+        {
+            return;
+        }
+        currTurnTimer += Time.deltaTime;
+        if (currTurnTimer >= turnMaxTime)
+        {
+            currTurnTimer = turnMaxTime;
+            turnReady = true;
+        }
+
+        currentMana += Time.deltaTime * manaGain;
+        if (currentMana >= maxMana)
+        {
+            currentMana = maxMana;
+        }
+
+        onChangeResource?.Invoke();
+
         Tile hoveredTile = GetHoveredTile();
 
         hoveredTile?.setHover();
@@ -54,6 +100,12 @@ public class Game : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void changeGameplayState(GameplayState newState)
+    {
+        gameplayState = newState;
+        onChangeState?.Invoke(gameplayState);
     }
 
     private Tile GetHoveredTile()
@@ -83,10 +135,14 @@ public class Game : MonoBehaviour
 
     public void startBattle()
     {
+        changeGameplayState(GameplayState.HERO_SETUP);
         foreach (BaseSpell spell in GameManager.Instance.playerGrimoire)
         {
             drawPile.Add(spell.copy());
         }
+        turnReady = false;
+        currTurnTimer = 0;
+        queueNextHand();
     }
 
     public void shuffleDiscard()
@@ -115,6 +171,10 @@ public class Game : MonoBehaviour
             if (drawPile.Count <= 0)
             {
                 shuffleDiscard();
+                if (drawPile.Count == 0)
+                {
+                    return;
+                }
             }
             BaseSpell spell = drawPile[0];
             drawPile.RemoveAt(0);
@@ -142,6 +202,8 @@ public class Game : MonoBehaviour
         {
             discardSpell(hand[i]);
         }
+        turnReady = false;
+        currTurnTimer = 0;
         queueNextHand();
     }
 }
