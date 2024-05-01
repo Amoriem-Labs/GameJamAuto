@@ -13,7 +13,7 @@ public abstract class BaseSpell : ICopyable<BaseSpell>
     public string spellName = "Unnamed Spell";
     protected string description = "Undefined";
 
-    public enum SpellType { NO_TARGET, SINGLE_TARGET, AOE, TARGET_ALLY};
+    public enum SpellType { NO_TARGET, SINGLE_TARGET, AOE, TARGET_ALLY, TARGET_ENEMY, TARGET_HERO};
 
     public SpellType spellType = SpellType.NO_TARGET;
 
@@ -27,11 +27,12 @@ public abstract class BaseSpell : ICopyable<BaseSpell>
 
     public abstract bool play();
 
-    public abstract List<Tile> highlight(Tile tile);
+    public abstract List<Tile> highlight();
 
     public void takeManaCost()
     {
         GameManager.Instance.game.currentMana -= statsDict["manaCost"];
+        GameManager.Instance.game.updateResourceUI();
     }
 
     public string getDescription()

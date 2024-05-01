@@ -9,22 +9,18 @@ public class TestSpellTwo : BaseSpell {
         statsDict["manaCost"] = 40;
         statsDict["shield"] = 300;
         spellName = "Test Spell Two";
-        description = "This is a test spell. Shields hero for <shield> shielding";
+        description = "This is a test spell. Shields all heroes for <shield> shielding";
         spellType = SpellType.NO_TARGET;
     }
     public override bool play() {
-        Entity selected = GameManager.Instance.game.getSelectedCharacter();
-        Entity.Team team = GameManager.Instance.game.getSelectedTeam();
+        List<Entity> heroes = GameManager.Instance.board.getEntitiesOfTypeFromBoard(entity => entity is HeroEntity);
 
-        if (team == Entity.Team.ENEMY && selected != null) // basically, if not null and on enemy team, then pass, otherwise fail
-        {
-            takeManaCost();
-            selected.TakeDamage(statsDict["damage"]);
-            return true;
+        foreach (Entity hero in heroes) {
+            hero?.AddShield(statsDict["shield"]);
         }
-        return false;
+        return true;
     }
-    public override List<Tile> highlight(Tile tile) {
-        return null;
+    public override List<Tile> highlight() {
+        return GameManager.Instance.board.getTilesOfTypeFromBoard(tile => tile.currentOccupant is HeroEntity);
     }
 }

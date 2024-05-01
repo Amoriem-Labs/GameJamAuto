@@ -12,6 +12,8 @@ public class Tile : MonoBehaviour
     public GameObject body;
 
     public bool hovered = false;
+    public bool shouldBeHighlighted = false;
+    public bool isHighlighted = false;
 
     public int xCoord;
     public int yCoord;
@@ -44,14 +46,16 @@ public class Tile : MonoBehaviour
         if (!hovered)
         {
             hovered = true;
-            highlight();
         }
     }
 
     public void clearHover()
     {
         hovered = false;
-        clearHighlight();
+    }
+
+    public void flagShouldHighlight(bool flag) {
+        shouldBeHighlighted = flag;
     }
 
     public void highlight()
@@ -74,6 +78,19 @@ public class Tile : MonoBehaviour
         _renderer.GetPropertyBlock(propBlock);
         propBlock.SetColor("_Color", originalColor);
         _renderer.SetPropertyBlock(propBlock);
+    }
+
+    public void validateHighlight() {
+        if (shouldBeHighlighted != isHighlighted) {
+            if (shouldBeHighlighted) {
+                highlight();
+                isHighlighted = true;
+            }
+            else {
+                clearHighlight();
+                isHighlighted = false;
+            }
+        }
     }
 
     private void addSelfToBoard()

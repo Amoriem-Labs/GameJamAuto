@@ -82,7 +82,7 @@ public abstract class Entity : MonoBehaviour
     }
 
     public virtual void tick() {
-        if (!(GameManager.Instance.game?.gameplayState == Game.GameplayState.BATTLING)) { return; }
+        if (!(GameManager.Instance.game?.gameplayState == Game.GameplayState.BATTLING) || GameManager.Instance.game.pauseGame) { return; }
         switch (state) {
             case State.IDLE:
                 if (anim != null) anim.Play("Idle");
@@ -151,6 +151,17 @@ public abstract class Entity : MonoBehaviour
                     }
                     else {
                         state = State.ATTACK;
+                    }
+                }
+                else {
+                    if (Vector3.Distance(transform.position, currentTile.transform.position) > 
+                        Vector3.Distance(transform.position, destinationTile.transform.position)) {
+
+                        currentTile.tileType = Tile.TileType.FREE;
+                        currentTile.currentOccupant = null;
+                        currentTile = currentPath[1];
+                        currentPath[1].tileType = Tile.TileType.OCCUPIED;
+                        currentPath[1].currentOccupant = this;
                     }
                 }
                 break;
@@ -237,10 +248,6 @@ public abstract class Entity : MonoBehaviour
         return false;
     }
 
-    public void validateUI() {
-
-    }
-
     public void TakeDamage(float dmg, Entity sender = null) {
         if (this == null) {
             return;
@@ -258,6 +265,13 @@ public abstract class Entity : MonoBehaviour
         if (health <= 0) {
             die();
         }
+    }
+
+    public void AddShield(float val, Entity sender = null) {
+        if (this == null) {
+            return;
+        }
+        shield += val;
     }
 
     public virtual void die() {

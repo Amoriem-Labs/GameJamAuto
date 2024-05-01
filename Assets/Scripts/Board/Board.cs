@@ -50,7 +50,34 @@ public class Board : MonoBehaviour
         //}
     }
 
+    public delegate bool CheckEntityDelegate(Entity entity);
+
+    public List<Entity> getEntitiesOfTypeFromBoard(CheckEntityDelegate entityCheck) {
+        List<Entity> entities = new List<Entity>();
+        for (int x = 0; x < boardWidth; x++) {
+            for (int y = 0; y < boardHeight; y++) {
+                if (entityCheck(boardTiles[x, y].currentOccupant)) {
+                    entities.Add(boardTiles[x, y].currentOccupant);
+                }
+            }
+        }
+        return entities;
+    }
+
+
     public delegate bool CheckTileDelegate(Tile tile);
+
+    public List<Tile> getTilesOfTypeFromBoard(CheckTileDelegate tileCheck) {
+        List<Tile> tiles = new List<Tile>();
+        for (int x = 0; x < boardWidth; x++) {
+            for (int y = 0; y < boardHeight; y++) {
+                if (tileCheck(boardTiles[x, y])) {
+                    tiles.Add(boardTiles[x, y]);
+                }
+            }
+        }
+        return tiles;
+    }
 
     public List<Tile> GetPathToTile(Tile startTile, CheckTileDelegate checkCompleteAction, bool ignoreTakenTiles = false)
     {

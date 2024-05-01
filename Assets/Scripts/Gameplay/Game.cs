@@ -9,13 +9,18 @@ public class Game : MonoBehaviour
 
     public GameplayState gameplayState = GameplayState.NOT_PLAYING;
 
+    public bool pauseGame = false;
+
+    [HideInInspector]
+    public SpellButton selectedSpellButton = null;
+
     public float heroHealth = 100;
     public float heroMaxHealth = 100;
     public float heroShield = 30;
 
     public float currentMana = 0;
     public float maxMana = 100f;
-    public float manaGain = 5f;
+    public float manaGain = 50f;
 
     public float turnMaxTime = 5f;
     public float currTurnTimer;
@@ -24,6 +29,7 @@ public class Game : MonoBehaviour
     public bool turnReady = false;
 
     public Tile hoveredTile;
+    public bool hoveringOverSpellButton;
 
     public List<EnemyEntity> enemyUnits = new List<EnemyEntity>();
 
@@ -45,6 +51,12 @@ public class Game : MonoBehaviour
     public delegate void OnChangeResource();
     public static event OnChangeResource onChangeResource;
 
+    public delegate void OnPause(bool paused);
+    public static event OnPause onPause;
+
+    public delegate void OnSelectSpellButton(bool active);
+    public static event OnSelectSpellButton onSelectSpellButton;
+
     public delegate void OnControlTooltip(bool active, string text = "", string body = "");
     public static event OnControlTooltip onControlTooltip;
 
@@ -62,11 +74,50 @@ public class Game : MonoBehaviour
 
         onChangeResource?.Invoke();
 
+        onPause?.Invoke(pauseGame);
+
         currTurnTimer = 0;
     }
 
     void Update()
     {
+
+        hoveredTile = GetHoveredTile();
+
+        hoveredTile?.setHover();
+
+        bool spellTargetValid = selectedSpellButton != null && checkSpellValid(hoveredTile, selectedSpellButton.heldSpell);
+
+        //print(spellTargetValid);
+
+        for (int x = 0; x < GameManager.Instance.board.boardWidth; x++) {
+            for (int y = 0; y < GameManager.Instance.board.boardHeight; y++) {
+                Tile boardTile = GameManager.Instance.board.boardTiles[x, y];
+                if (boardTile.hovered && (hoveredTile == null || !hoveredTile.equals(boardTile))) {
+                    boardTile.clearHover();
+                }
+                boardTile.flagShouldHighlight(false);
+            }
+        }
+
+        if (selectedSpellButton == null) {
+            hoveredTile?.flagShouldHighlight(true);
+        }
+        else {
+            if (spellTargetValid) {
+                foreach (Tile tile in selectedSpellButton.heldSpell.highlight()) {
+                    tile.flagShouldHighlight(true);
+                }
+            }
+        }
+
+        for (int x = 0; x < GameManager.Instance.board.boardWidth; x++) {
+            for (int y = 0; y < GameManager.Instance.board.boardHeight; y++) {
+                Tile boardTile = GameManager.Instance.board.boardTiles[x, y];
+                boardTile.validateHighlight();
+            }
+        }
+
         if (Input.GetKeyDown(KeyCode.P)) {
             print("a");
             foreach (BaseSpell spell in drawPile) {
@@ -87,6 +138,32 @@ public class Game : MonoBehaviour
             }
             createEntity(GameManager.EntityTypes.TEST_CHAR_ONE);
             createEntity(GameManager.EntityTypes.TEST_ENEMY_ONE);
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space)) {
+            print("pause");
+            pauseGame = !pauseGame;
+            onPause?.Invoke(pauseGame);
+        }
+
+        if (Input.GetMouseButtonDown(0)) {
+            if (selectedSpellButton != null) {
+                if (spellTargetValid && !hoveringOverSpellButton) {
+                    selectedSpellButton.heldSpell.play();
+                    selectedSpellButton.heldSpell.takeManaCost();
+                    discardSpell(selectedSpellButton.heldSpell);
+                    cancelSelectedSpellButton();
+                }
+            }
+        }
+        if (Input.GetMouseButtonDown(1)) {
+            if (selectedSpellButton != null) {
+                cancelSelectedSpellButton();
+            }
+        }
+
+        if (pauseGame) {
+            return;
         }
 
         switch (gameplayState) {
@@ -121,29 +198,54 @@ public class Game : MonoBehaviour
                 onChangeResource?.Invoke();
                 break;
         }
+    }
 
-        Tile hoveredTile = GetHoveredTile();
+    public void updateResourceUI() {
+        onChangeResource?.Invoke();
+    }
 
-        hoveredTile?.setHover();
-
-        for (int x = 0; x < GameManager.Instance.board.boardWidth; x++)
-        {
-            for (int y = 0; y < GameManager.Instance.board.boardHeight; y++)
-            {
-                Tile boardTile = GameManager.Instance.board.boardTiles[x, y];
-                if (boardTile.hovered && (hoveredTile == null || !hoveredTile.equals(boardTile)))
-                {
-                    boardTile.hovered = false;
-                    boardTile.clearHover();
-                }
-            }
+    private bool checkSpellValid(Tile _hoveredTile, BaseSpell spell) {
+        if (spell.statsDict["manaCost"] > currentMana) {
+            return false;
         }
+        switch (spell.spellType) {
+            case BaseSpell.SpellType.NO_TARGET:
+                return true;
+            case BaseSpell.SpellType.SINGLE_TARGET:
+                return _hoveredTile != null;
+            case BaseSpell.SpellType.TARGET_ALLY:
+                return _hoveredTile != null && _hoveredTile.currentOccupant != null && _hoveredTile.currentOccupant.team == Entity.Team.PLAYER;
+            case BaseSpell.SpellType.AOE:
+                return _hoveredTile != null;
+            case BaseSpell.SpellType.TARGET_ENEMY:
+                return _hoveredTile != null && _hoveredTile.currentOccupant != null && _hoveredTile.currentOccupant.team == Entity.Team.ENEMY;
+            case BaseSpell.SpellType.TARGET_HERO:
+                return _hoveredTile != null && _hoveredTile.currentOccupant != null && _hoveredTile.currentOccupant is HeroEntity;
+        }
+        return false;
     }
 
     private void changeGameplayState(GameplayState newState)
     {
         gameplayState = newState;
         onChangeState?.Invoke(gameplayState);
+    }
+
+    public void selectNewSpellButton(SpellButton sb) {
+        if (selectedSpellButton != null && selectedSpellButton != sb) {
+            selectedSpellButton.deselect();
+            selectedSpellButton = null;
+        }
+        selectedSpellButton = sb;
+        onSelectSpellButton?.Invoke(true);
+    }
+
+    public void cancelSelectedSpellButton() {
+        if (selectedSpellButton != null) {
+            selectedSpellButton.deselect();
+            selectedSpellButton = null;
+        }
+        onSelectSpellButton?.Invoke(false);
     }
 
     private Tile GetHoveredTile()
